@@ -15,9 +15,14 @@ running=True
 player_rect=pygame.Rect(screen.get_width()/2,screen.get_height()/2,100,100)
 player_rect.center=screen.get_rect().center
 bullet_list=[]
-enemy=pygame.Rect(randint(0,screen.get_width()-50),-50,50,50)
+enemies=[]
+for i in range(5):
+    size=randint(40,80)
+    enemy=pygame.Rect(randint(0,screen.get_width()-size),randint(-100,0),size,size)
+    enemies.append(enemy)
+
 enemy_speed=100
-lives=3
+lives=10
 live_txt=font.render(f"lives={lives}",True,"white","Black")
 game_over=False
 font2=pygame.font.Font(None,60)
@@ -25,20 +30,24 @@ game_over_txt=font2.render("Game Over",True,"RED")
 restart_txt=font2.render("Press R to Restart",True,"White")
 
 def game_reset():
-    global score ,score_txt, running, player_rect,bullet_list,enemy,enemy_speed,lives,live_txt,game_over
+    global score ,score_txt, running, player_rect,bullet_list,enemies,enemy_speed,lives,live_txt,game_over
     score=0
     score_txt=font.render(f"score={score}",True,"white","Black")
     player_rect=pygame.Rect(screen.get_width()/2,screen.get_height()/2,100,100)
     player_rect.center=screen.get_rect().center
     bullet_list=[]
-    enemy=pygame.Rect(randint(0,screen.get_width()-50),-50,50,50)
+    enemies=[]
+    for i in range(5):
+        size=randint(40,80)
+        enemy=pygame.Rect(randint(0,screen.get_width()-size),randint(-100,0),size,size)
+        enemies.append(enemy)
     enemy_speed=100
-    lives=3
+    lives=10
     live_txt=font.render(f"lives={lives}",True,"white","Black")
     game_over=False
 
 while running:
-    screen.fill("orange")
+    screen.fill("black")
     dt=clock.tick(120)/1000
     for event in pygame.event.get():
         if event.type==pygame.QUIT:
@@ -55,17 +64,34 @@ while running:
 
 
     if not game_over:
+        for index,enemy in enumerate(enemies):
+            enemy.y+=enemy_speed*dt
+            pygame.draw.ellipse(screen,"orange",enemy)
+            if player_rect.colliderect(enemy):
+                size=randint(40,80)
+                lives-=1
+                live_txt=font.render(f"lives={lives}",True,"white","Black")
+                enemies[index]=pygame.Rect(randint(0,screen.get_width()-size),randint(-100,0),size,size)
+            if enemy.bottom>screen.get_height()+50:
+                size=randint(40,80)
+                lives-=1
+                live_txt=font.render(f"lives={lives}",True,"white","Black")
+                enemies[index]=pygame.Rect(randint(0,screen.get_width()-size),randint(-100,0),size,size)
         new_bulletlist=[]
         for bullet in bullet_list:
+            hit=False
             bullet.y-=350*dt
-            pygame.draw.circle(screen,"black",bullet.center,15)
-            if bullet.colliderect(enemy):
-                score+=1
-                enemy_speed+=100
-                enemy_speed=min(enemy_speed,500)
-                score_txt=font.render(f"score={score}",True,"white","Black")
-                enemy=pygame.Rect(randint(0,screen.get_width()-50),-50,50,50)
-            elif not  ( bullet.y<=-30):
+            pygame.draw.circle(screen,"red",bullet.center,15)
+            for index,enemy in enumerate(enemies):
+                if bullet.colliderect(enemy):
+                    size=randint(40,80)
+                    hit=True
+                    score+=1
+                    enemy_speed+=5
+                    enemy_speed=min(enemy_speed,300)
+                    score_txt=font.render(f"score={score}",True,"white","Black")
+                    enemies[index]=pygame.Rect(randint(0,screen.get_width()-size),randint(-100,0),size,size)
+            if not hit and  not (bullet.y<=-30):
                 new_bulletlist.append(bullet)
         bullet_list=new_bulletlist
 
@@ -79,27 +105,16 @@ while running:
             if player_rect.y>=screen.get_height()-100:
                 player_rect.y=screen.get_height()-100
         if key[pygame.K_a]:
-            player_rect.x-=300*dt
+            player_rect.x-=500*dt
             if player_rect.x<=0:
                 player_rect.x=0
         if key[pygame.K_d]:
-            player_rect.x+=300*dt
+            player_rect.x+=500*dt
             if player_rect.x>=screen.get_width()-100:
                 player_rect.x=screen.get_width()-100
 
         pygame.draw.rect(screen,"GREEN",player_rect)
 
-        if player_rect.colliderect(enemy):
-            lives-=1
-            live_txt=font.render(f"lives={lives}",True,"white","Black")
-            enemy=pygame.Rect(randint(0,screen.get_width()-50),-50,50,50)
-
-        enemy.y+=enemy_speed*dt
-        pygame.draw.ellipse(screen,"blue",enemy)
-        if enemy.bottom>screen.get_height()+50:
-            lives-=1
-            live_txt=font.render(f"lives={lives}",True,"white","Black")
-            enemy=pygame.Rect(randint(0,screen.get_width()-50),-50,50,50)
     if lives<=0:
         game_over=True
         screen.blit(game_over_txt,(500,250))
